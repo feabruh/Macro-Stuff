@@ -18,8 +18,8 @@ TypeToFunction := Map(
 )
 
 global CurrentPostionLabel := ""
-global FredokaOneFont := "%A_MyDocuments%\PetCatchers_Macros\Storage\Fonts\F_One.ttf"
-global TimesNewRomanFont := "%A_MyDocuments%\PetCatchers_Macros\Storage\Fonts\T_NR.ttf"
+global FredokaOneFont := "%A_MyDocuments%\PS99_Macros\Storage\Fonts\F_One.ttf"
+global TimesNewRomanFont := "%A_MyDocuments%\PS99_Macros\Storage\Fonts\T_NR.ttf"
 global CB := ""
 
 global VariablisticMap := Map()
@@ -914,7 +914,7 @@ CreateBaseUI(Map(
         */
 
     ],
-    "SettingsFolder", {Folder:A_MyDocuments "\PetCatchers_Macros\SavedSettings\", FolderName:"Testing"}
+    "SettingsFolder", {Folder:A_MyDocuments "\PS99_Macros\SavedSettings\", FolderName:"Testing"}
 )).BaseUI.Show()
 
 F3::{
