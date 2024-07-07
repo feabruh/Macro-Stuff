@@ -863,7 +863,7 @@ global ColorsAndStuffMap := Map(
 ObjectOrder := ["Basic", "Rare", "Epic", "Legendary", "Mythical", "Exotic", "Divine", "Superior", "Celestial", "Exclusive", "Unknown"]
 */
 CreateBaseUI(Map(
-    "Main", {Title:"Basic", Video:"nothing here", Description:"F7 to exit`nF8 to reload`nF9 to pause", MacroName:"Basic", Version:"1.0.1", DescY:250, IncludeFonts:false, noCaptions:true},
+    "Main", {Title:"Basic", Video:"nothing here", Description:"F7 to exit`nF8 to reload`nF9 to pause", MacroName:"Basic", Version:"1.0.2", DescY:250, IncludeFonts:false, noCaptions:true},
     "Settings", [
         {
             Map:TSMAP,
