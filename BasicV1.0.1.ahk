@@ -1,4 +1,4 @@
-; /[V1.0.1]\
+; /[V1.0.2]\
 
 #Requires AutoHotkey v2.0 
 CoordMode "Mouse", "Screen"
