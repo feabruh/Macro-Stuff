@@ -27,6 +27,7 @@ ModulesToDownload := Map(
     "EasyUI.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/EasyUI.ahk",
     "_JXON.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/_JXON.ahk",
     "Router.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/Router.ahk",
+    "Router2.ahk", "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/Router2.ahk",
     "UWBOCRLib.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/UWBOCRLib.ahk"
 )
 
