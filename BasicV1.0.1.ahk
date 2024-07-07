@@ -1,3 +1,5 @@
+; /[V1.0.1]\
+
 #Requires AutoHotkey v2.0 
 CoordMode "Mouse", "Screen"
 CoordMode "Pixel", "Screen"
