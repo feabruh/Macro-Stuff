@@ -10,12 +10,12 @@ InfoText := InfoUI.Add("Text","w600 Center","Checking Folders... | If this gets 
 InfoUI.Show()
 
 MHLink := "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/MacroHub.ahk"
-BaseIni := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/BaseIni.ini"
+BaseIni := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/BaseIni.ini" ; added base ini files
 
 FoldersToCheck := [
     A_MyDocuments "\PS99_Macros",
     A_MyDocuments "\PS99_Macros\MacroFiles",
-    A_MyDocuments "\PS99_Macros\MacroInfo",
+    A_MyDocuments "\PS99_Macros\MacroInfo", ; added MacroInfo folder
     A_MyDocuments "\PS99_Macros\Modules",
     A_MyDocuments "\PS99_Macros\SavedSettings",
     A_MyDocuments "\PS99_Macros\Storage",
@@ -27,7 +27,7 @@ ModulesToDownload := Map(
     "EasyUI.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/EasyUI.ahk",
     "_JXON.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/_JXON.ahk",
     "Router.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/Router.ahk",
-    "Router2.ahk", "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/Router2.ahk",
+    "Router2.ahk", "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/Router2.ahk", ; added my version of router
     "UWBOCRLib.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/UWBOCRLib.ahk"
 )
 
@@ -36,7 +36,7 @@ FontsDownload := Map(
     "T_NR.ttf", "https://github.com/SimplyJustBased/MacroShenanigans/raw/main/Fonts/T_NR.ttf"
 )
 
-MacroInfo := A_MyDocuments "\PS99_Macros\MacroInfo\*.ini"
+MacroInfo := A_MyDocuments "\PS99_Macros\MacroInfo\*.ini" ; lines 39 to 71 (the macro order is broken with this version btw)
 
 Macros := Map()
 MacroOrder := []
@@ -98,7 +98,7 @@ if DifferenceInMHVersion.R {
     ExitApp
 }
 
-InfoText.Text := "Checking BaseIni... | If this gets stuck, Hit F8"
+InfoText.Text := "Checking BaseIni... | If this gets stuck, Hit F8" ; lines 101 to 123
 
 if not FileExist(A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini") {
     Download(BaseIni, A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini")
