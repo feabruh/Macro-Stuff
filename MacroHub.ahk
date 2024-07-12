@@ -1,21 +1,18 @@
-; /[V1.0.1TEST]\
+; /[V1.0.2TEST]\
 
 #Requires AutoHotkey v2.0
 
-global Version := "1.0.0"
+global Version := "1.0.2TEST"
 global InfoUI := Gui()
 InfoUI.Opt("-SysMenu -Caption +AlwaysOnTop")
 InfoUI.SetFont("s15")
 InfoText := InfoUI.Add("Text","w600 Center","Checking Folders... | If this gets stuck, Hit F8")
 InfoUI.Show()
 
-MHLink := "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/MacroHub.ahk"
-BaseIni := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/BaseIni.ini" ; added base ini files
-
 FoldersToCheck := [
     A_MyDocuments "\PS99_Macros",
     A_MyDocuments "\PS99_Macros\MacroFiles",
-    A_MyDocuments "\PS99_Macros\MacroInfo", ; added MacroInfo folder
+    A_MyDocuments "\PS99_Macros\MacroInfo",
     A_MyDocuments "\PS99_Macros\Modules",
     A_MyDocuments "\PS99_Macros\SavedSettings",
     A_MyDocuments "\PS99_Macros\Storage",
@@ -23,64 +20,40 @@ FoldersToCheck := [
     A_MyDocuments "\PS99_Macros\Storage\Images"
 ]
 
-ModulesToDownload := Map(
-    "EasyUI.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/EasyUI.ahk",
-    "_JXON.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/_JXON.ahk",
-    "Router.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/Router.ahk",
-    "Router2.ahk", "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/Router2.ahk", ; added my version of router
-    "UWBOCRLib.ahk", "https://raw.githubusercontent.com/SimplyJustBased/MacroShenanigans/main/Modules/UWBOCRLib.ahk"
-)
-
-FontsDownload := Map(
-    "F_One.ttf", "https://github.com/SimplyJustBased/MacroShenanigans/raw/main/Fonts/F_One.ttf",
-    "T_NR.ttf", "https://github.com/SimplyJustBased/MacroShenanigans/raw/main/Fonts/T_NR.ttf"
-)
-
-MacroInfo := A_MyDocuments "\PS99_Macros\MacroInfo\*.ini" ; lines 39 to 71 (the macro order is broken with this version btw)
-
-Macros := Map()
-MacroOrder := []
-
-try
-    Loop Files MacroInfo
-    {
-        IniFilePath := A_LoopFileFullPath
-        Loop Read IniFilePath
-        {
-            Line := A_LoopReadLine
-            If (SubStr(Line, 1, 1) = ";")
-                Continue
-            If (Line = "")
-                Continue
-            If (InStr(Line, "[") and InStr(Line, "]"))
-            {
-                SectionName := StrReplace(StrReplace(Line, "["), "]")
-                MacroOrder.Push(SectionName)
-                Macros[SectionName] := Map()
-                Macros[SectionName].Status := IniRead(IniFilePath, SectionName, "Status", "")
-                Macros[SectionName].StatusColor := IniRead(IniFilePath, SectionName, "StatusColor", "")
-                Macros[SectionName].RawLink := IniRead(IniFilePath, SectionName, "RawLink", "")
-                Macros[SectionName].APILink := IniRead(IniFilePath, SectionName, "APILink", "")
-                Macros[SectionName].MacroFile := IniRead(IniFilePath, SectionName, "MacroFile", "")
-                ExistantStr := IniRead(IniFilePath, SectionName, "Existant", "false")
-                Macros[SectionName].Existant := (ExistantStr = "true")
-            }
-        }
-    }
-catch as e
-    MsgBox("Error reading file.`n(" e.Message ")",, "4096")
-
-Xs := [40, 270, 500]
-Ys := [60, 220, 440]
-
-For _, FolderPath in FoldersToCheck {
+for _, FolderPath in FoldersToCheck {
     if not DirExist(FolderPath) {
         DirCreate(FolderPath)
     }
 
 }
 
-InfoText.Text := "Checking Macro Hub... | If this gets stuck, Hit F8"
+MHLink := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/MacroHub.ahk" ; dont have to keep this, but best to keep it (i think)
+BaseIni := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/BaseIni.ini" ; have to keep this (i think)
+
+InfoText.Text := "Loading Settings... | If this gets stuck, Hit F8"
+
+if not FileExist(A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini") {
+    Download(BaseIni, A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini")
+}
+
+whr := ComObject("WinHttp.WinHttpRequest.5.1")
+whr.Open("GET", BaseIni, true)
+whr.Send()
+whr.WaitForResponse()
+DifferenceinIniVersion := VersionCheck(A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini", whr.ResponseText) ; do i really have to check for the version of the ini file? idk but i will anyways
+
+if DifferenceinIniVersion.R {
+    whr := ComObject("WinHttp.WinHttpRequest.5.1")
+    whr.Open("GET", BaseIni, true)
+    whr.Send()
+    whr.WaitForResponse()
+
+    Path := A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini"
+    FileDelete(Path)
+    FileAppend(whr.ResponseText, Path, "UTF-8-RAW")
+}
+
+InfoText.Text := "Checking Macro Hub... | If this gets stuck, Hit F8"   
 
 whr := ComObject("WinHttp.WinHttpRequest.5.1")
 whr.Open("GET", MHLink, true)
@@ -98,35 +71,107 @@ if DifferenceInMHVersion.R {
     ExitApp
 }
 
-InfoText.Text := "Checking BaseIni... | If this gets stuck, Hit F8" ; lines 101 to 123
+MacroInfo := A_MyDocuments "\PS99_Macros\MacroInfo\*.ini"
 
-if not FileExist(A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini") {
-    Download(BaseIni, A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini")
-    Reload
+Macros := Map()
+Modules := Map()
+Fonts := Map()
+MacroHub := Map()
+MacroOrder := []
+ValidCategories := ["Macros", "Modules", "Fonts", "MacroHub"]
+
+try { ; think i can make this a little more efficient
+    loop files MacroInfo {
+        IniFilePath := A_LoopFileFullPath
+        loop read IniFilePath {
+            Line := A_LoopReadLine
+            if (SubStr(Line, 1, 1) = ";") or (Line = "")
+                continue
+            if (InStr(Line, "{") and InStr(Line, "}")) {
+                SectionName := StrReplace(StrReplace(Line, "{"), "}")
+                Category := DetermineCategory(SectionName)
+            }
+            if (InStr(Line, "[") and InStr(Line, "]")) {
+                SubSectionName := StrReplace(StrReplace(Line, "["), "]")
+                if (Category = "MACROS") {
+                    MacroOrder.Push(SubSectionName)
+                    Macros[SubSectionName] := Map()
+                    FillProperties(Macros[SubSectionName], IniFilePath, SubSectionName, Category)
+                } else if (Category = "Fonts") {
+                    Fonts[SubSectionName] := Map()
+                    FillProperties(Fonts[SubSectionName], IniFilePath, SubSectionName, Category)
+                } else if (Category = "Modules") {
+                    Modules[SubSectionName] := Map()
+                    FillProperties(Modules[SubSectionName], IniFilePath, SubSectionName, Category)
+                } else if (Category = "MacroHub") {
+                    MacroHub[SubSectionName] := Map()
+                    FillProperties(MacroHub[SubSectionName], IniFilePath, SubSectionName, Category)
+                }
+            }
+        }
+    }
+} catch as e {
+    MsgBox("Error reading file.`n(" e.Message ")",, "4096")
 }
 
-whr := ComObject("WinHttp.WinHttpRequest.5.1")
-whr.Open("GET", BaseIni, true)
-whr.Send()
-whr.WaitForResponse()
-DifferenceinIniVersion := VersionCheck(A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini", whr.ResponseText)
+DetermineCategory(SectionName) {
+    for index, Category in ValidCategories {
+        if (InStr(SectionName, Category)) {
+            return Category
+        }
+    }
+    return "UNKNOWN"
+}
+    
+FillProperties(SectionMap, IniFilePath, SubSectionName, Category) { ; this could prob be way more efficient but wtv
+    if (Category = "Macros") {
+        SectionMap.Status := IniRead(IniFilePath, SubSectionName, "Status", "")
+        SectionMap.StatusColor := IniRead(IniFilePath, SubSectionName, "StatusColor", "")
+        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
+        SectionMap.APILink := IniRead(IniFilePath, SubSectionName, "APILink", "")
+        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "false")
+        ExistantStr := IniRead(IniFilePath, SubSectionName, "Existant", "false")
+        SectionMap.Existant := (ExistantStr = "true") 
+    } else if (Category = "MacroHub"){
+        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
+    } else if (Category = "Fonts") {
+        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
+        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
+        Fonts[SectionMap.FileName] := SectionMap.RawLink
+        DownloadFonts(SectionMap.FileName, SectionMap.RawLink)
+    } else if (Category = "Modules") {
+        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
+        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
+        Modules[SectionMap.FileName] := SectionMap.RawLink
+        DownloadModules(SectionMap.FileName, SectionMap.RawLink)
+    } else { ; other categories that arent defined yet
+        MsgBox("hi")
+    }
+}
 
-if DifferenceinIniVersion.R {
+Xs := [40, 270, 500]
+Ys := [60, 220, 440]
+
+DownloadFonts(Font, FontLink) {
+    InfoText.Text := "Checking " Font "... | If this gets stuck, Hit F8"
+    Download(FontLink, A_MyDocuments "\PS99_Macros\Storage\Fonts\" Font)
+}
+
+DownloadModules(ModuleName, ModuleLink) {
+    InfoText.Text := "Checking " ModuleName "... | If this gets stuck, Hit F8"
     whr := ComObject("WinHttp.WinHttpRequest.5.1")
-    whr.Open("GET", BaseIni, true)
+    whr.Open("GET", ModuleLink, true)
     whr.Send()
     whr.WaitForResponse()
 
-    Path := A_MyDocuments "\PS99_Macros\MacroInfo\BaseIni.ini"
-    FileDelete(Path)
-    FileAppend(whr.ResponseText, Path, "UTF-8-RAW")
+    if FileExist(A_MyDocuments "\PS99_Macros\Modules\" ModuleName) {
+        FileDelete(A_MyDocuments "\PS99_Macros\Modules\" ModuleName)
+    }
+
+    FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\Modules\" ModuleName, "UTF-8-RAW")
 }
 
-InfoText.Text := "Checking Fonts... | If this gets stuck, Hit F8"
-
-For Font, FontLink in FontsDownload {
-    Download(FontLink, A_MyDocuments "\PS99_Macros\Storage\Fonts\" Font)
-}
+InfoText.Text := "Checking Macros... | If this gets stuck, Hit F8"
 
 GoodTimeDiff(IsoTime) {
     Reformatted := ""
@@ -149,24 +194,6 @@ GoodTimeDiff(IsoTime) {
 
     return {Time:"A Couple", Word:"seconds"}
 }
-
-InfoText.Text := "Checking Modules... | If this gets stuck, Hit F8"
-
-for ModuleName, ModuleLink in ModulesToDownload {
-    whr := ComObject("WinHttp.WinHttpRequest.5.1")
-    whr.Open("GET", ModuleLink, true)
-    whr.Send()
-    whr.WaitForResponse()
-
-    if FileExist(A_MyDocuments "\PS99_Macros\Modules\" ModuleName) {
-        FileDelete(A_MyDocuments "\PS99_Macros\Modules\" ModuleName)
-    }
-
-    FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\Modules\" ModuleName, "UTF-8-RAW")
-}
-
-InfoText.Text := "Checking Macros... | If this gets stuck, Hit F8"
-
 
 VersionCheck(FileMain, ResponseText) {
     FileText := FileRead(FileMain)
@@ -212,8 +239,8 @@ CreateMacroBox(MacroObject) {
         whr.Send()
         whr.WaitForResponse()
 
-        if FileExist(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile) {
-            IsDifferenceInVersion := VersionCheck(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile, whr.ResponseText)
+        if FileExist(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName) {
+            IsDifferenceInVersion := VersionCheck(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName, whr.ResponseText)
 
             if IsDifferenceInVersion.R {
                 Result := MsgBox(
@@ -222,32 +249,32 @@ CreateMacroBox(MacroObject) {
                     "0x1032 0x4"
                 )
                 if Result = "Yes" {
-                    FileDelete(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile)
-                    FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile, "UTF-8-RAW" )
+                    FileDelete(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName)
+                    FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName, "UTF-8-RAW" )
                     
                     Result2 := MsgBox("Macro has been updated, would you like to run it?", "Macro Update", "0x1040 0x4")
                     if Result2 = "Yes" {
-                        Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile)
+                        Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName)
                         ExitApp()
                     }
 
                 } else if Result = "No" {
-                    Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile)
+                    Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName)
                     ExitApp()
                 }
             } else {
-                Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile)
+                Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName)
                 ExitApp()
             }
         } else {
             Result := MsgBox("It seems you currently don't have this macro installed, would you like to install it?", "Macro Installation", "0x1032 0x4")
 
             if Result = "Yes" {
-                FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile, "UTF-8-RAW")
+                FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName, "UTF-8-RAW")
 
                 Result2 := MsgBox("Macro has been installed, would you like to run it?", "Macro Installation", "0x1040 0x4")
                 if Result2 = "Yes" {
-                    Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.MacroFile)
+                    Run(A_MyDocuments "\PS99_Macros\MacroFiles\" MacroObject.FileName)
                     ExitApp()
                 }
             }
@@ -312,7 +339,6 @@ Jxon_Load(&src, args*) {
 
 			throw Error(msg, -1, ch)
 		}
-		
 		obj := stack[1]
         is_array := (obj is Array)
 		
