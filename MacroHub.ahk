@@ -1,8 +1,8 @@
-; /[V1.0.3TEST]\
+; /[V1.0.4TEST]\
 
 #Requires AutoHotkey v2.0
 
-global Version := "1.0.3TEST"
+global Version := "1.0.4TEST"
 global InfoUI := Gui()
 InfoUI.Opt("-SysMenu -Caption +AlwaysOnTop")
 InfoUI.SetFont("s15")
@@ -24,7 +24,6 @@ for _, FolderPath in FoldersToCheck {
     if not DirExist(FolderPath) {
         DirCreate(FolderPath)
     }
-
 }
 
 MHLink := "https://raw.githubusercontent.com/feabruh/Macro-Stuff/main/MacroHub.ahk"
@@ -75,14 +74,14 @@ MacroInfo := A_MyDocuments "\PS99_Macros\MacroInfo\*.ini"
 Macros := Map()
 Modules := Map()
 Fonts := Map()
-MacroHub := Map()
+Ini := Map()
 MacroOrder := []
 ValidCategories := ["Macros", "Modules", "Fonts", "Ini"]
 
 ReadIniFiles() {
-    try { ; think i can make this a little more efficient
-            loop files MacroInfo {
-            IniFilePath := A_LoopFileFullPath
+    try {
+	loop files MacroInfo {
+	IniFilePath := A_LoopFileFullPath
             loop read IniFilePath {
                 Line := A_LoopReadLine
                 if (SubStr(Line, 1, 1) = ";") or (Line = "")
@@ -93,19 +92,13 @@ ReadIniFiles() {
                 }
                 if (InStr(Line, "[") and InStr(Line, "]")) {
                     SubSectionName := StrReplace(StrReplace(Line, "["), "]")
-                    if (Category = "MACROS") {
+                    if (Category = "Macros") {
                         MacroOrder.Push(SubSectionName)
                         Macros[SubSectionName] := Map()
                         FillProperties(Macros[SubSectionName], IniFilePath, SubSectionName, Category)
-                    } else if (Category = "Fonts") {
-                        Fonts[SubSectionName] := Map()
-                        FillProperties(Fonts[SubSectionName], IniFilePath, SubSectionName, Category)
-                    } else if (Category = "Modules") {
-                        Modules[SubSectionName] := Map()
-                        FillProperties(Modules[SubSectionName], IniFilePath, SubSectionName, Category)
-                    } else if (Category = "Ini") {
-                        MacroHub[SubSectionName] := Map()
-                        FillProperties(MacroHub[SubSectionName], IniFilePath, SubSectionName, Category)
+                    } else if (Category != "Macros") {
+                        %Category%[SubSectionName] := Map()
+                        FillProperties(%Category%[SubSectionName], IniFilePath, SubSectionName, Category)
                     }
                 }
             }
@@ -125,8 +118,13 @@ DetermineCategory(SectionName) {
     return "UNKNOWN"
 }
     
-FillProperties(SectionMap, IniFilePath, SubSectionName, Category) { ; this could prob be way more efficient but wtv
-    if (Category = "Macros") {
+FillProperties(SectionMap, IniFilePath, SubSectionName, Category) {
+    if (Category != "Macros") {
+        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
+        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
+        %Category%[SectionMap.FileName] := SectionMap.RawLink
+        DownloadFiles(SectionMap.FileName, SectionMap.RawLink, Category)
+    } else {
         SectionMap.Status := IniRead(IniFilePath, SubSectionName, "Status", "")
         SectionMap.StatusColor := IniRead(IniFilePath, SubSectionName, "StatusColor", "")
         SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
@@ -134,44 +132,30 @@ FillProperties(SectionMap, IniFilePath, SubSectionName, Category) { ; this could
         SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "false")
         ExistantStr := IniRead(IniFilePath, SubSectionName, "Existant", "false")
         SectionMap.Existant := (ExistantStr = "true") 
-    } else if (Category = "Ini"){
-        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
-        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
-    } else if (Category = "Fonts") {
-        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
-        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
-        Fonts[SectionMap.FileName] := SectionMap.RawLink
-        DownloadFonts(SectionMap.FileName, SectionMap.RawLink)
-    } else if (Category = "Modules") {
-        SectionMap.FileName := IniRead(IniFilePath, SubSectionName, "FileName", "")
-        SectionMap.RawLink := IniRead(IniFilePath, SubSectionName, "RawLink", "")
-        Modules[SectionMap.FileName] := SectionMap.RawLink
-        DownloadModules(SectionMap.FileName, SectionMap.RawLink)
-    } else { ; other categories that arent defined yet
-        MsgBox("hi")
     }
 }
 
 Xs := [40, 270, 500]
 Ys := [60, 220, 440]
 
-DownloadFonts(Font, FontLink) {
-    InfoText.Text := "Checking " Font "... | If this gets stuck, Hit F8"
-    Download(FontLink, A_MyDocuments "\PS99_Macros\Storage\Fonts\" Font)
-}
-
-DownloadModules(ModuleName, ModuleLink) {
-    InfoText.Text := "Checking " ModuleName "... | If this gets stuck, Hit F8"
-    whr := ComObject("WinHttp.WinHttpRequest.5.1")
-    whr.Open("GET", ModuleLink, true)
-    whr.Send()
-    whr.WaitForResponse()
-
-    if FileExist(A_MyDocuments "\PS99_Macros\Modules\" ModuleName) {
-        FileDelete(A_MyDocuments "\PS99_Macros\Modules\" ModuleName)
+DownloadFiles(FileName, RawLink, Category) {
+    InfoText.Text := "Checking " FileName "... | If this gets stuck, Hit F8"
+    
+    Switch Category {
+        Case "Fonts":
+            Download(RawLink, A_MyDocuments "\PS99_Macros\Storage\Fonts\" FileName)
+        Case "Modules":
+            whr := ComObject("WinHttp.WinHttpRequest.5.1")
+            whr.Open("GET", RawLink, true)
+            whr.Send()
+            whr.WaitForResponse()
+            if FileExist(A_MyDocuments "\PS99_Macros\Modules\" FileName) {
+                FileDelete(A_MyDocuments "\PS99_Macros\Modules\" FileName)
+            }
+            FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\Modules\" FileName, "UTF-8-RAW")
+        Case "Ini":
+            Download(RawLink, A_MyDocuments "\PS99_Macros\MacroInfo\" FileName)
     }
-
-    FileAppend(whr.ResponseText, A_MyDocuments "\PS99_Macros\Modules\" ModuleName, "UTF-8-RAW")
 }
 
 InfoText.Text := "Checking Macros... | If this gets stuck, Hit F8"
@@ -315,56 +299,29 @@ RemoveFileButton.SetFont("s12")
 AddFileButton.OnEvent("Click", (*) => AddFile())
 RemoveFileButton.OnEvent("Click", (*) => RemoveFile())
 
-AddFile() { ; this is so bad
+AddFile() {
     global AddFileUI := Gui(,"Add File")
     AddFileUI.Opt("+AlwaysOnTop")
-    AFTabs := AddFileUI.AddTab3("", ["Add Macros", "Add Modules", "Add Fonts", "Add .Ini Files"])
-    AFTabs.UseTab(1)
-    AddFileUI.SetFont("s15")
-    AddFileUI.AddText("Section w700 h30 Center", "Add Macro").SetFont("s15 w700")
-    AddFileUI.AddText("xs y+10 h60 w700 Center", "Enter the Raw Link of the github page`nand enter the name of the name of the file`nand make sure you include the file extension in the file name.").SetFont("s12 w600")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "File Name:").SetFont("s12 w600")
-    FileNameEdit1 := AddFileUI.AddEdit("w400 h30 x150 y+10 vFileName")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "Raw Link:").SetFont("s12 w600")
-    RawLinkEdit1 := AddFileUI.AddEdit("w400 h30 x150 y+10 vRawLink")
-    Submit := AddFileUI.AddButton("w200 h40 x265 y360", "Submit")
-    Submit.SetFont("s12")
-    Submit.OnEvent("Click", (*) => SaveFile("Macros", FileNameEdit1, RawLinkEdit1))
-    AFTabs.UseTab(2)
-    AddFileUI.SetFont("s15")
-    AddFileUI.AddText("Section w700 h30 Center", "Add Module").SetFont("s15 w700")
-    AddFileUI.AddText("xs y+10 h60 w700 Center", "Enter the Raw Link of the github page`nand enter the name of the name of the file`nand make sure you include the file extension in the file name.").SetFont("s12 w600")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "File Name:").SetFont("s12 w600")
-    FileNameEdit2 := AddFileUI.AddEdit("w400 h30 x150 y+10 vFileName2")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "Raw Link:").SetFont("s12 w600")
-    RawLinkEdit2 := AddFileUI.AddEdit("w400 h30 x150 y+10 vRawLink2")
-    Submit := AddFileUI.AddButton("w200 h40 x265 y360", "Submit")
-    Submit.SetFont("s12")
-    Submit.OnEvent("Click", (*) => SaveFile("Modules", FilenameEdit2, RawLinkEdit2))
-    AFTabs.UseTab(3)
-    AddFileUI.SetFont("s15")
-    AddFileUI.AddText("Section w700 h30 Center", "Add Font").SetFont("s15 w700")
-    AddFileUI.AddText("xs y+10 h60 w700 Center", "Enter the Raw Link of the github page`nand enter the name of the name of the file`nand make sure you include the file extension in the file name.").SetFont("s12 w600")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "File Name:").SetFont("s12 w600")
-    FileNameEdit3 := AddFileUI.AddEdit("w400 h30 x150 y+10 vFileName3")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "Raw Link:").SetFont("s12 w600")
-    RawLinkEdit3 := AddFileUI.AddEdit("w400 h30 x150 y+10 vRawLink3")
-    Submit := AddFileUI.AddButton("w200 h40 x265 y360", "Submit")
-    Submit.SetFont("s12")
-    Submit.OnEvent("Click", (*) => SaveFile("Fonts", FileNameEdit3, RawLinkEdit3))
-    AFTabs.UseTab(4)
-    AddFileUI.SetFont("s15")
-    AddFileUI.AddText("Section w700 h30 Center", "Add ini File").SetFont("s15 w700")
-    AddFileUI.AddText("xs y+10 h60 w700 Center", "Enter the Raw Link of the github page`nand enter the name of the name of the file`nand make sure you include the file extension in the file name.").SetFont("s12 w600")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "File Name:").SetFont("s12 w600")
-    FileNameEdit4 := AddFileUI.AddEdit("w400 h30 x150 y+10 vFileName4")
-    AddFileUI.AddText("xs y+40 h20 w700 Center", "Raw Link:").SetFont("s12 w600")
-    RawLinkEdit4 := AddFileUI.AddEdit("w400 h30 x150 y+10 vRawLink4")
-    Submit := AddFileUI.AddButton("w200 h40 x265 y360", "Submit")
-    Submit.SetFont("s12")
-    Submit.OnEvent("Click", (*) => SaveFile("Ini", FileNameEdit4, RawLinkEdit4))
+    AFTabs := AddFileUI.AddTab3(, ValidCategories)
+    for Category in ValidCategories {
+        AddTabContent(Category, A_Index)
+    }
     AddFileUI.Show()
     AddFileUI.OnEvent("Close", (*) => AddFileUI.Destroy())
+
+    AddTabContent(Category, tabIndex) {
+        AFTabs.UseTab(tabIndex)
+        AddFileUI.SetFont("s15")
+        AddFileUI.AddText("Section w700 h30 Center", "Add " Category).SetFont("s15 w700")
+        AddFileUI.AddText("xs y+10 h60 w700 Center", "Enter the Raw Link of the github page`nand enter the name of the name of the file`nand make sure you include the file extension in the file name.").SetFont("s12 w600")
+        AddFileUI.AddText("xs y+40 h20 w700 Center", "File Name:").SetFont("s12 w600")
+        FileNameEdit := AddFileUI.AddEdit("w400 h30 x150 y+10 vFileName" tabIndex)
+        AddFileUI.AddText("xs y+40 h20 w700 Center", "Raw Link:").SetFont("s12 w600")
+        RawLinkEdit := AddFileUI.AddEdit("w400 h30 x150 y+10 vRawLink" tabIndex)
+        Submit := AddFileUI.AddButton("w200 h40 x265 y360", "Submit")
+        Submit.SetFont("s12")
+        Submit.OnEvent("Click", (*) => SaveFile(Category, FileNameEdit, RawLinkEdit))
+    }
 
     SaveFile(Category, FileNameEdit, RawLinkEdit) {
         AddFileUI.Submit(false)
@@ -378,17 +335,18 @@ AddFile() { ; this is so bad
     }
 }
 
+
 RemoveFile() {
-    global RemoveFileUI := Gui(,"Remove File")
+    global RemoveFileUI := Gui(, "Remove File")
     RemoveFileUI.Opt("+AlwaysOnTop")
-    global radio1 := RemoveFileUI.AddRadio(, "Remove Macros")
-    radio1.OnEvent("Click", (*) => RemoveFile2())
-    global radio2 := RemoveFileUI.AddRadio(, "Remove Modules")
-    radio2.OnEvent("Click", (*) => RemoveFile2())
-    global radio3 := RemoveFileUI.AddRadio(, "Remove Fonts")
-    radio3.OnEvent("Click", (*) => RemoveFile2())
-    global radio4 := RemoveFileUI.AddRadio(, "Remove .Ini Files")
-    radio4.OnEvent("Click", (*) => RemoveFile2())
+    categories := ["Remove Macros", "Remove Modules", "Remove Fonts", "Remove .Ini Files"]
+    global radioButtons := []
+
+    for i, category in categories {
+        radio := RemoveFileUI.AddRadio(, category)
+        radio.OnEvent("Click", (*) => RemoveFile2())
+        radioButtons.Push(radio)
+    }
     RemoveFileUI.Show()
     RemoveFileUI.OnEvent("Close", (*) => RemoveFileUI.Destroy())
 }
@@ -396,29 +354,19 @@ RemoveFile() {
 RemoveFile2() {
     RemoveFileUI.Hide()
     MacroHubUI.Hide()
-    radio1value := ControlGetChecked(radio1, "Remove File")
-    radio2value := ControlGetChecked(radio2, "Remove File")
-    radio3value := ControlGetChecked(radio3, "Remove File")
-    radio4value := ControlGetChecked(radio4, "Remove File")
-    if radio1value = 1 {
-        SelectedFile := FileSelect("M", A_MyDocuments "\PS99_Macros\MacroFiles\", "Select the files you want to remove", "*.ahk")
-        for _, SFile in SelectedFile {
+    paths := [
+        A_MyDocuments "\PS99_Macros\MacroFiles\*.ahk",
+        A_MyDocuments "\PS99_Macros\Modules\*.ahk",
+        A_MyDocuments "\PS99_Macros\Storage\Fonts\*.ttf",
+        A_MyDocuments "\PS99_Macros\MacroInfo\*.ini"
+    ]
+
+    for i, radio in radioButtons {
+        if ControlGetChecked(radio, "Remove File") {
+            SelectedFile := FileSelect("M", StrReplace(paths[i], "*.ahk", ""), "Select the files you want to remove", StrSplit(paths[i], "\").Pop())
+            for _, SFile in SelectedFile {
                 FileDelete(SFile)
             }
-    } else if radio2value = 1 {
-        SelectedFile := FileSelect("M", A_MyDocuments "\PS99_Macros\Modules\", "Select the files you want to remove", "*.ahk")
-        for _, SFile in SelectedFile {
-            FileDelete(SFile)
-        }
-    } else if radio3value = 1 {
-        SelectedFile := FileSelect("M", A_MyDocuments "\PS99_Macros\Storage\Fonts\", "Select the files you want to remove", "*.ttf")
-        for _, SFile in SelectedFile {
-            FileDelete(SFile)
-        }
-    } else if radio4value = 1 {
-        SelectedFile := FileSelect("M", A_MyDocuments "\PS99_Macros\MacroInfo\", "Select the files you want to remove", "*.ini")
-        for _, SFile in SelectedFile {
-            FileDelete(SFile)
         }
     }
     MacroHubUI.Show()
